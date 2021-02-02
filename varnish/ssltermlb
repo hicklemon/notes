@@ -1,0 +1,5 @@
+sub vcl_recv {
+    if (req.http.X-Forwarded-Proto ~ "https") {
+        return(pass);
+    }
+}

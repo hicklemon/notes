@@ -1,0 +1,6 @@
+backend admin {
+    .host = "127.0.0.1";
+    .port = "80";
+    .first_byte_timeout = 18000s;
+    .between_bytes_timeout = 18000s;
+}

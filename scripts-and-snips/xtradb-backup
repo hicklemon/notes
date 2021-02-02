@@ -1,0 +1,91 @@
+###### CENTOS/RHEL
+
+### On BOTH servers:
+
+yum install http://www.percona.com/downloads/percona-release/percona-release-0.0-1.x86_64.rpm
+yum install pv pigz screen xtrabackup
+
+### Set up SSH keys for Master --> Slave/newmaster
+
+slave=ip.ip.ip.ip
+ssh-keygen
+ssh slave
+
+### Slave:
+
+mkdir /var/lib/mysql_incoming
+
+### Master:
+
+screen
+time innobackupex --slave-info --stream=tar . | pv -s `du -sb /var/lib/mysql | cut -f1` | pigz -p4 | ssh root@${slave} "pigz -d - | tar ixf - -C /var/lib/mysql_incoming"
+
+# If your backup worked, you should see the next to last line as "140101 00:00:00  innobackupex: completed OK!"
+
+### Slave:
+
+innobackupex --use-memory=1G --apply-log /var/lib/mysql_incoming
+chown -R mysql: /var/lib/mysql_incoming
+service mysqld stop
+mv /var/lib/mysql{,_old}
+mv /var/lib/mysql_incoming /var/lib/mysql
+
+#If cloning a master:
+cat xtrabackup_binlog_info
+
+# If cloning a slave:
+cat xtrabackup_slave_info
+
+# And apply within MySQL command line:
+
+CHANGE MASTER TO MASTER_HOST='', MASTER_USER='replicant', MASTER_PASSWORD='', MASTER_LOG_FILE='bin.001', MASTER_LOG_POS=12345;
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+###### UBUNTU/DEBIAN
+
+### On BOTH servers:
+
+apt-key adv --keyserver keys.gnupg.net --recv-keys 1C4CBDCDCD2EFD2A
+vim /etc/apt/source.list
+    ADD:    deb http://repo.percona.com/apt VERSION main
+    ADD:    deb-src http://repo.percona.com/apt VERSION main
+    AND SAVE.
+apt-get update
+apt-get install pv pigz screen xtrabackup
+
+### Set up SSH keys for Master --> Slave/newmaster
+
+slave=ip.ip.ip.ip
+ssh-keygen
+ssh slave
+
+### Slave:
+
+mkdir /var/lib/mysql_incoming
+
+### Master:
+
+screen
+time innobackupex --slave-info --stream=tar . | pv -s `du -sb /var/lib/mysql | cut -f1` | pigz -p4 | ssh root@${slave} "pigz -d - | tar ixf - -C /var/lib/mysql_incoming"
+
+# If your backup worked, you should see the next to last line as "140101 00:00:00  innobackupex: completed OK!"
+
+### Slave:
+
+innobackupex --use-memory=1G --apply-log /var/lib/mysql_incoming
+chown -R mysql: /var/lib/mysql_incoming
+service mysql stop
+mv /var/lib/mysql{,_old}
+mv /var/lib/mysql_incoming /var/lib/mysql
+cd /var/lib/mysql
+
+#If cloning a master:
+cat xtrabackup_binlog_info
+
+# If cloning a slave:
+cat xtrabackup_slave_info
+
+# And apply within MySQL command line:
+
+CHANGE MASTER TO MASTER_HOST='', MASTER_USER='replicant', MASTER_PASSWORD='', MASTER_LOG_FILE='bin.001', MASTER_LOG_POS=12345;

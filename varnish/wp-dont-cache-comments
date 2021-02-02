@@ -1,0 +1,195 @@
+backend default
+{
+    .host = "127.0.0.1";
+    .port = "8080";
+    .first_byte_timeout = 30s;
+    .connect_timeout = 5s;
+    .between_bytes_timeout = 60s;
+}
+//backend master {
+// .host = "10.x.x.x";
+// .port = "80";
+//}
+acl purge {
+    "localhost";
+}
+sub vcl_recv {
+    // Don't cache ajax requests
+    if(req.http.X-Requested-With == "XMLHttpRequest" || req.url ~ "nocache" || req.url ~ "(control.php|wp-comments-post.php|wp-login.php|bb-login.php|bb-reset-password.php|register.php)") {
+        return (pass);
+    }
+    set req.http.test = regsub(req.http.referer, ".*.com", "");
+    if (req.url == req.http.test) {
+       if (req.url ~ "^/blog/(.*)/") {
+         ban("req.url == " + req.url);
+       }
+       return(pass);
+    }
+    // Always cache these images & static assets
+    if (req.request == "GET" && req.url ~ "\.(css|js|gif|jpg|jpeg|bmp|png|ico|img|tga|wmf)") {
+        remove req.http.cookie;
+        return(lookup);
+    }
+    if (req.url ~ "^/blog/(.*)/") {
+        unset req.http.cookie;
+        return(lookup);
+    }
+    if (req.http.PurgeMe) {
+        return(pass);
+    }
+    
+    if (req.url ~ "^/blog/") {
+        return(pass);
+    }  
+    if (req.http.user-agent ~ "facebookexternalhit") {
+        return(pass);
+    }
+    // Testing facebook
+    if (req.http.referer ~ "facebook" ) {
+        return(pass);
+    }
+    if (req.request == "GET" && req.url ~ "\.(zip)$") {
+        return(pass);
+    }
+    if (req.request == "PURGE") {
+        if (!client.ip ~ purge) {
+            error 405 "Not allowed.";
+        }
+        return(lookup);
+    }
+    if (req.restarts == 0) {
+        if (req.http.x-forwarded-for) {
+            set req.http.X-Forwarded-For =
+                req.http.X-Forwarded-For + ", " + client.ip;
+        } else {
+            set req.http.X-Forwarded-For = client.ip;
+        }
+    }
+    // don't cache authenticated sessions
+    if (req.http.Cookie && req.http.Cookie ~ "(wordpress_|PHPSESSID)") {
+        return(pass);
+    }
+    // Do not cache these files:
+    // Never cache the admin pages, or the server-status page
+    if (req.url ~ "wp-(admin|login)|apc.php" || req.url ~ "dlg/" || req.http.Content-Type ~ "multipart/form-data") {
+    //        set req.backend = master;
+        return(pass);
+    }
+    // does not cache for domain - passes directly to apache
+    if (req.http.host ~ "subdomain.domain.com") {
+        return(pass);
+    }
+    // Never cache POST requests
+    if (req.request == "POST") {
+    //        return(pass);
+        return(pass);
+    }
+    // Always cache these images & static assets
+    if (req.request == "GET" && req.url ~ "\.(css|js|gif|jpg|jpeg|bmp|png|ico|img|tga|wmf)") {
+        remove req.http.cookie;
+        return(lookup);
+    }
+    if (req.request == "GET" && req.url ~ "(xmlrpc.php|wlmanifest.xml)") {
+        remove req.http.cookie;
+        return(lookup);
+    }
+    // DO cache this ajax request
+    if(req.http.X-Requested-With == "XMLHttpRequest" && req.url ~ "recent_reviews") {
+        return (lookup);
+    }
+    if (req.http.Cookie && req.http.Cookie ~ "wordpress_") {
+        set req.http.Cookie = regsuball(req.http.Cookie, "wordpress_test_cookie=", "; wpjunk=");
+    }
+    // parse accept encoding rulesets to make it look nice
+    if (req.http.Accept-Encoding) {
+        if (req.http.Accept-Encoding ~ "gzip") {
+            set req.http.Accept-Encoding = "gzip";
+        }
+        elsif (req.http.Accept-Encoding ~ "deflate") {
+            set req.http.Accept-Encoding = "deflate";
+        }
+        else {
+    // unkown algorithm
+            remove req.http.Accept-Encoding;
+        }
+    }
+    // Don't cache order complete forms
+    if( req.url ~ "order-complete") {
+        return (pass);
+    }
+    if (req.http.Cookie) {
+        set req.http.Cookie = ";" + req.http.Cookie;
+        set req.http.Cookie = regsuball(req.http.Cookie, "; +", ";");
+        set req.http.Cookie = regsuball(req.http.Cookie, ";(vendor_region|PHPSESSID|themetype2|comment_)=", "; \1=");
+        set req.http.Cookie = regsuball(req.http.Cookie, ";[^ ][^;]*", "");
+        set req.http.Cookie = regsuball(req.http.Cookie, "^[; ]+|[; ]+$", "");
+        if (req.http.Cookie == "") {
+            remove req.http.Cookie;
+        } else {
+           return(pass);
+        }
+    }
+    if (req.url ~ "^/$") {
+        unset req.http.cookie;
+    }
+    return(lookup);
+}
+sub vcl_hit {
+    #if (req.http.PurgeMe) {
+    #    set req.url = req.http.Referer;
+    #    set req.http.MYREF = req.http.Referer;
+    #   purge;
+    #}
+    if (req.request == "PURGE") {
+        set obj.ttl = 0s;
+        error 200 "Purged.";
+    }
+}
+sub vcl_miss {
+    #if (req.http.PurgeMe) {
+    #    set req.url = req.http.Referer;
+    #    set req.http.MYREF = req.http.Referer;
+    #   purge;
+    #}
+    if (req.request == "PURGE") {
+        error 404 "Not in cache.";
+    }
+    if (!(req.url ~ "wp-(login|admin)")) {
+        unset req.http.cookie;
+    }
+    if (req.url ~ "^/[^?]+.(jpeg|jpg|png|gif|ico|js|css|txt|gz|zip|lzma|bz2|tgz|tbz|html|htm)(\?.|)$") {
+        unset req.http.cookie;
+        set req.url = regsub(req.url, "\?.$", "");
+    }
+    if (req.url ~ "^/$") {
+        unset req.http.cookie;
+    }
+}
+sub vcl_fetch {
+    if (req.url == req.http.test) {
+        set req.http.PurgeMe = "1";
+        set beresp.http.PurgeMe = "1";
+    }
+    if (req.url ~ "^/blog/(.*)/") {
+        return(deliver);
+    }
+    if (req.url ~ "^/$") {
+        unset beresp.http.set-cookie;
+    }
+    if ((req.url !~ "wp-(login|admin)" && req.url !~ "dlg/") && req.http.Set-Cookie ~ "comment_") {
+          unset beresp.http.set-cookie;
+    }
+}
+sub vcl_pass {
+    /* Force the connection to be closed afterwards so subsequent reqs
+    don't use pass */
+    set bereq.http.connection = "close";
+}
+sub vcl_deliver {
+    
+    if (obj.hits > 0) {
+            set resp.http.X-Cache = "HIT";
+    } else {
+            set resp.http.X-Cache = "MISS";
+    }
+}

@@ -1,0 +1,20 @@
+sub vcl_recv {
+    #--Add Server Status Exclusion
+    if (req.url ~ "/server-status") {
+        if (client.ip ~ purge) {
+            return(pass);
+        }
+    else {
+        error 750 "http://"+req.http.host;
+        }
+    }
+}
+
+sub vcl_error {
+  # Redirect to some other URL in the case of a homepage failure.
+  if (obj.status == 750) {
+    set obj.http.Location = obj.response;
+    set obj.status = 302;
+    return(deliver);
+  }
+}

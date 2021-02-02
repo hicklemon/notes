@@ -1,0 +1,20 @@
+Edit app/etc/di.xml
+Find this line: "    <preference for="Magento\Framework\DB\LoggerInterface" type="Magento\Framework\DB\Logger\Quiet"/>"
+Change to:      <preference for="Magento\Framework\DB\LoggerInterface" type="Magento\Framework\DB\Logger\File"/>
+
+Next, add this to anywhere in the app/etc/di.xml:
+<type name="Magento\Framework\DB\Logger\File">
+    <arguments>
+        <!--this is in relation to the <magento root>/var folder-->
+        <argument name="debugFile" xsi:type="string">debug/db.log</argument>
+        <!--set to true to log backtrace, remove line or set to false to not log trace-->
+        <argument name="logCallStack" xsi:type="boolean">true</argument>
+
+        <!--set to true to log all queries, set to false to only log slow queries-->
+        <argument name="logAllQueries" xsi:type="boolean">true</argument>
+        <!--length of time in seconds that is considered a 'slow' query.-->
+        <argument name="logQueryTime" xsi:type="string">0.05</argument>
+    </arguments>
+</type>
+
+In M2, you would have to then recompile di by running "bin/magento setup:di:compile".  You might also have to flush cache before that with "bin/magento cache:flush", I'm not sure on that...I do just to be safe.

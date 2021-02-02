@@ -1,0 +1,12 @@
+aws autoscaling describe-lifecycle-hooks --auto-scaling-group-name xxxxxxxx | awk -F\" '/LifecycleHookName/ {print $4}'
+
+
+aws autoscaling complete-lifecycle-action --lifecycle-action-result ABANDON --lifecycle-hook-name xxxxxxxx --auto-scaling-group-name xxxxxxxx --instance-id xxxxxxxx
+
+
+Loop it:
+
+#!/bin/bash
+ASG=blah
+INSTANCE=blah
+for HOOK in $(aws autoscaling describe-lifecycle-hooks --auto-scaling-group-name ${ASG} | awk -F\" '/LifecycleHookName/ {print $4}'); do aws autoscaling complete-lifecycle-action --lifecycle-action-result ABANDON --lifecycle-hook-name ${HOOK} --auto-scaling-group-name ${ASG} --instance-id ${INSTANCE}; done

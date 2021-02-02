@@ -1,0 +1,38 @@
+Not SSLterm:
+
+RewriteEngine On
+# This will enable the Rewrite capabilities
+
+RewriteCond %{HTTPS} !=on
+# This checks to make sure the connection is not already HTTPS
+
+RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R,L]
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+nginx:
+
+server {
+    listen 80;
+    ....
+    location / {
+        if ($http_x_forwarded_proto != 'https') {
+            rewrite ^ https://$host$request_uri? permanent;
+        }
+    ....
+    }
+}
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+apache:
+
+<VirtualHost *:80>
+...
+RewriteEngine On
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^.*$ https://%{SERVER_NAME}%{REQUEST_URI}
+...
+</VirtualHost>
+
+--------------------------------------------------------------------------------------------------------------------------------

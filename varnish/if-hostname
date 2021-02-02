@@ -1,0 +1,3 @@
+    if (req.http.host ~ "^(www\.)?mysite.com$") {
+        return(pass);
+    }

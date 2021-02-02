@@ -1,0 +1,31 @@
+# lsof -n | grep deleted | grep database
+tail      19833     root    3r      REG              202,1    22634     917513 /database/mgslice.err (deleted)
+#
+# tail -1 /database/mgslice.err
+tail: cannot open `/database/mgslice.err' for reading: No such file or directory
+#
+# tail -1 /proc/19833/fd/3
+tail: inotify cannot be used, reverting to polling
+141023 23:15:43 mysqld_safe mysqld from pid file /var/run/mysqld/mysqld.pid ended
+#
+#
+# cp -a /proc/19833/fd/3 mgslice.err
+#
+# file mgslice.err
+mgslice.err: broken symbolic link to `/database/mgslice.err (deleted)'
+#
+# cp /proc/19833/fd/3 mgslice.err
+cp: not writing through dangling symlink `mgslice.err'
+#
+# rm -f mgslice.err
+#
+#
+# cp /proc/19833/fd/3 mgslice.err # not -a
+#
+# file mgslice.err
+mgslice.err: ASCII English text, with very long lines
+#
+# tail -1 mgslice.err
+141023 23:15:43 mysqld_safe mysqld from pid file /var/run/mysqld/mysqld.pid ended
+#
+

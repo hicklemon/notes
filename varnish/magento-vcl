@@ -1,0 +1,130 @@
+### This is a basic VCL configuration file for Magento.       Current 2014-10-03
+### Working with Varnish 3.0, in need of 4.0 conversion.
+###   * Ignores connections with X-Forwarded-Proto HTTPS in case you use SSLTerm
+###   * Avoids touching cookies such as frontend, adminhtml - add more if needed
+###   * Avoids touching multipart/formdata
+###   * Otherwise, cache all static assets; feel free to remove CSS/JS if needed
+ 
+## default backend definition.  Set this to point to your content server. If you
+## set up a second backend for admin passes to the master, be sure  to  point it
+## to the port of the backend server, not another Varnish instance.
+ 
+backend default {
+    .host = "127.0.0.1";
+    .port = "8080";
+}
+ 
+#backend master {
+#    .host = "10.10.20.30";
+#    .port = "8080";
+#    .first_byte_timeout    = 600s;
+#    .between_bytes_timeout = 600s;
+#}
+ 
+acl purge {
+    "localhost";
+}
+ 
+sub vcl_recv {
+ 
+    ## Prevent varnish from  caching HTTPS through an  SSL-terminated load balancer:
+    if (req.http.X-Forwarded-Proto ~ "HTTPS") {
+        return(pass); ## Don't use pipe unless you enable vcl_pipe in this file
+    }
+ 
+        ## If you need to force your webserver to rewrite HTTPS:
+        ##
+        ##   LB SSLTERM with APACHE:
+        ##     RewriteEngine On
+        ##     RewriteCond %{HTTP:X-Forwarded-Proto} !https
+        ##     RewriteRule ^.*$ https://%{SERVER_NAME}%{REQUEST_URI}
+        ##
+        ##   LB SSLTERM with NGINX:
+        ##     location / {
+        ##       if ($http_x_forwarded_proto != 'https') {
+        ##         rewrite ^ https://$host$request_uri? permanent;
+        ##       }
+ 
+    if (req.request == "PURGE") {
+        if (!client.ip ~ purge) {
+            error 405 "Not allowed.";
+        }
+        return(lookup);
+    }
+ 
+    if (req.restarts == 0) {
+        if (req.http.x-forwarded-for) {
+            set req.http.X-Forwarded-For =
+            req.http.X-Forwarded-For + ", " + client.ip;
+        } else {
+            set req.http.X-Forwarded-For = client.ip;
+        }
+    }
+ 
+    ## Never cache session-related pages, or formdata
+    if (req.http.cookie ~ "(frontend|adminhtml)"
+         || req.http.Content-Type ~ "multipart/form-data"
+         || req.url ~ "(ajax|cart|checkout|account)")
+    {
+        #set req.backend = master;
+        return(pass);
+    }
+ 
+    ## Always cache these images & static assets
+    if (req.request == "GET"
+         || req.url ~ "\.(css|js|gif|jpg|jpeg|bmp|png|ico|img|tga|wmf)$") {
+        unset req.http.cookie;
+        return(lookup);
+    }
+ 
+}
+ 
+sub vcl_fetch {
+ 
+    ## Never cache session-related pages, or formdata
+ 
+    if (beresp.http.cookie ~ "(frontend|adminhtml)"
+         || beresp.http.Content-Type ~ "multipart/form-data"
+         || beresp.http.Content-Type ~ "multipart/form-data"
+         || bereq.url ~ "(ajax|cart|checkout|account)")
+    {
+        return(hit_for_pass);
+    }
+ 
+    ## Always cache these images & static assets
+    if (req.request == "GET"
+         || req.url ~ "\.(css|js|gif|jpg|jpeg|bmp|png|ico|img|tga|wmf)$") {
+        unset beresp.http.cookie;
+        unset beresp.http.set-cookie;
+        set beresp.http.cache-control = "max-age=3600; public";
+        set beresp.ttl = 120s;
+    }
+ 
+    if (beresp.ttl < 120s) {
+        set beresp.ttl = 120s;
+        set beresp.do_gzip = true;
+    }
+ 
+    if (beresp.http.Pragma ~ "nocache") {
+        return(hit_for_pass);
+    }
+ 
+}
+ 
+sub vcl_deliver {
+ 
+    if (obj.hits > 0) {
+        set resp.http.X-Cache = "HIT";
+    } else {
+        set resp.http.X-Cache = "MISS";
+    }
+ 
+}
+ 
+#sub vcl_pipe {
+#
+#    ## https://www.varnish-cache.org/trac/wiki/VCLExamplePipe for explanation
+#    ## This forces every pipe request to be the first one.
+#    set bereq.http.connection = "close";
+#
+#}

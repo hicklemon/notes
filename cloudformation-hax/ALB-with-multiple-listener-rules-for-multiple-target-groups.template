@@ -1,0 +1,750 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Application Load Balancer with 3 Target Groups bound to existing ASGs",
+  "Conditions": {
+    "UseCertificates": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "SSL"
+            },
+            ""
+          ]
+        }
+      ]
+    },
+    "UseSSLPolicy": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "SSLPolicy"
+            },
+            ""
+          ]
+        }
+      ]
+    }
+  },
+  "Parameters": {
+    "LoadBalancerName": {
+        "Type": "String",
+        "Default": "MagentoAdminALB",
+        "Description": "A name for the load balancer, which must be unique within your AWS account."
+    },
+    "Environment": {
+        "Default": "Production",
+        "Type": "String",
+        "Description": "Application environment for which this ALB is being created. e.g. Development/Production.",
+        "AllowedValues": [
+            "Development",
+            "Integration",
+            "PreProduction",
+            "Production",
+            "Staging",
+            "Test"
+        ]
+    },
+    "VPCId":{
+      "Type" : "AWS::EC2::VPC::Id",
+      "Description" : "Select Virtual Private Cloud ID."        
+    },
+    "ALBSubnets": {
+        "Description": "Select the public subnets the load balancer will listen on.",
+        "Type": "List<AWS::EC2::Subnet::Id>"
+    },
+    "ALBSecurityGroupIds": {
+      "Description": "Select the security group to be associated with the load balancer",
+      "Type": "List<AWS::EC2::SecurityGroup::Id>",
+      "Default": ""
+    },
+    "TargetGroup1HealthCheckPath": {
+      "Default": "/",
+      "Description": "The ping path destination where Elastic Load Balancing sends health check requests.",
+      "MaxLength": "1024",
+      "Type": "String"
+    },
+    "TargetGroup1HealthCheckPort": {
+      "Default": "traffic-port",
+      "Description": "",
+      "Type": "String"
+    },
+    "TargetGroup1HealthCheckTimeoutSeconds": {
+      "Default": "5",
+      "Description": "The number of seconds to wait for a response before considering that a health check has failed.",
+      "MaxValue": "60",
+      "MinValue": "2",
+      "Type": "Number"
+    },
+    "TargetGroup1HealthCheckIntervalSeconds": {
+      "Default": "30",
+      "Description": "The approximate number of seconds between health checks for an individual target.",
+      "MaxValue": "300",
+      "MinValue": "5",
+      "Type": "Number"
+    },
+    "TargetGroup1HealthCheckProtocol": {
+      "AllowedValues": [
+        "HTTP",
+        "HTTPS",
+        "TCP",
+        "UDP"
+      ],
+      "Default": "HTTP",
+      "Description": "The protocol that the load balancer uses when performing health checks on the targets, such as HTTP or HTTPS.",
+      "Type": "String"
+    },
+    "TargetGroup1HealthyThresholdCount": {
+      "Default": "5",
+      "Description": "The number of consecutive successful health checks that are required before an unhealthy target is considered healthy.",
+      "MaxValue": "10",
+      "MinValue": "2",
+      "Type": "Number"
+    },
+    "TargetGroup1UnhealthyThresholdCount": {
+      "Default": "2",
+      "Description": "The number of consecutive failed health checks that are required before a target is considered unhealthy.",
+      "MaxValue": "10",
+      "MinValue": "2",
+      "Type": "Number"
+    },
+    "TargetGroup1Name": {
+      "Default": "MagentoAppTG",
+      "Description": "The name you want to give to the default Magento application Target Group.",
+      "Type": "String"
+    },
+    "TargetGroup1Port": {
+      "Default": "80",
+      "Description": "The port on which the targets receive traffic.",
+      "MaxValue": "65535",
+      "MinValue": "1",
+      "Type": "Number"
+    },
+    "TargetGroup1Protocol": {
+      "AllowedValues": [
+        "HTTP",
+        "HTTPS"
+      ],
+      "Default": "HTTP",
+      "Description": "The protocol to use for routing traffic to the targets.",
+      "Type": "String"
+    },
+    "TargetGroup1MatcherCode": {
+      "Default": "200,301,302",
+      "Description": "The HTTP codes. The default value is 200.",
+      "Type": "String"
+    },
+    "TargetGroup1AttributeDelayTimeout": {
+      "Default": "0",
+      "Description": "The amount time for Elastic Load Balancing to wait before changing the state of a deregistering target from draining to unused.",
+      "MaxValue": "3600",
+      "MinValue": "0",
+      "Type": "Number"
+    },
+    "TargetGroup1AttributeStickinessEnabled": {
+      "AllowedValues": [
+        "true",
+        "false"
+      ],
+      "ConstraintDescription": "Value must be either lowercase true or false.",
+      "Default": "false",
+      "Description": "Indicates whether sticky sessions are enabled.",
+      "Type": "String"
+    },
+    "TargetGroup1CookieDuration": {
+      "Default": "86400",
+      "Description": "The time period, in seconds, during which requests from a client should be routed to the same target.",
+      "MaxValue": "604800",
+      "MinValue": "1",
+      "Type": "Number"
+    },
+    "TargetGroup2HealthCheckPath": {
+      "Default": "/",
+      "Description": "The ping path destination where Elastic Load Balancing sends health check requests.",
+      "MaxLength": "1024",
+      "Type": "String"
+    },
+    "TargetGroup2HealthCheckPort": {
+      "Default": "traffic-port",
+      "Description": "",
+      "Type": "String"
+    },
+    "TargetGroup2HealthCheckTimeoutSeconds": {
+      "Default": "5",
+      "Description": "The number of seconds to wait for a response before considering that a health check has failed.",
+      "MaxValue": "60",
+      "MinValue": "2",
+      "Type": "Number"
+    },
+    "TargetGroup2HealthCheckIntervalSeconds": {
+      "Default": "30",
+      "Description": "The approximate number of seconds between health checks for an individual target.",
+      "MaxValue": "300",
+      "MinValue": "5",
+      "Type": "Number"
+    },
+    "TargetGroup2HealthCheckProtocol": {
+      "AllowedValues": [
+        "HTTP",
+        "HTTPS",
+        "TCP",
+        "UDP"
+      ],
+      "Default": "HTTP",
+      "Description": "The protocol that the load balancer uses when performing health checks on the targets, such as HTTP or HTTPS.",
+      "Type": "String"
+    },
+    "TargetGroup2HealthyThresholdCount": {
+      "Default": "5",
+      "Description": "The number of consecutive successful health checks that are required before an unhealthy target is considered healthy.",
+      "MaxValue": "10",
+      "MinValue": "2",
+      "Type": "Number"
+    },
+    "TargetGroup2UnhealthyThresholdCount": {
+      "Default": "2",
+      "Description": "The number of consecutive failed health checks that are required before a target is considered unhealthy.",
+      "MaxValue": "10",
+      "MinValue": "2",
+      "Type": "Number"
+    },
+    "TargetGroup2Name": {
+      "Default": "MagentoAdminTG",
+      "Description": "The name you want to give to the Magento Admin Target Group.",
+      "Type": "String"
+    },
+    "TargetGroup2Port": {
+      "Default": "80",
+      "Description": "The port on which the targets receive traffic.",
+      "MaxValue": "65535",
+      "MinValue": "1",
+      "Type": "Number"
+    },
+    "TargetGroup2Protocol": {
+      "AllowedValues": [
+        "HTTP",
+        "HTTPS"
+      ],
+      "Default": "HTTP",
+      "Description": "The protocol to use for routing traffic to the targets.",
+      "Type": "String"
+    },
+    "TargetGroup2MatcherCode": {
+      "Default": "200,301,302",
+      "Description": "The HTTP codes. The default value is 200.",
+      "Type": "String"
+    },
+    "TargetGroup2AttributeDelayTimeout": {
+      "Default": "0",
+      "Description": "The amount time for Elastic Load Balancing to wait before changing the state of a deregistering target from draining to unused.",
+      "MaxValue": "3600",
+      "MinValue": "0",
+      "Type": "Number"
+    },
+    "TargetGroup2AttributeStickinessEnabled": {
+      "AllowedValues": [
+        "true",
+        "false"
+      ],
+      "ConstraintDescription": "Value must be either lowercase true or false.",
+      "Default": "false",
+      "Description": "Indicates whether sticky sessions are enabled.",
+      "Type": "String"
+    },
+    "TargetGroup2CookieDuration": {
+      "Default": "86400",
+      "Description": "The time period, in seconds, during which requests from a client should be routed to the same target.",
+      "MaxValue": "604800",
+      "MinValue": "1",
+      "Type": "Number"
+    },
+    "TargetGroup3HealthCheckPath": {
+      "Default": "/",
+      "Description": "The ping path destination where Elastic Load Balancing sends health check requests.",
+      "MaxLength": "1024",
+      "Type": "String"
+    },
+    "TargetGroup3HealthCheckPort": {
+      "Default": "traffic-port",
+      "Description": "",
+      "Type": "String"
+    },
+    "TargetGroup3HealthCheckTimeoutSeconds": {
+      "Default": "5",
+      "Description": "The number of seconds to wait for a response before considering that a health check has failed.",
+      "MaxValue": "60",
+      "MinValue": "2",
+      "Type": "Number"
+    },
+    "TargetGroup3HealthCheckIntervalSeconds": {
+      "Default": "30",
+      "Description": "The approximate number of seconds between health checks for an individual target.",
+      "MaxValue": "300",
+      "MinValue": "5",
+      "Type": "Number"
+    },
+    "TargetGroup3HealthCheckProtocol": {
+      "AllowedValues": [
+        "HTTP",
+        "HTTPS",
+        "TCP",
+        "UDP"
+      ],
+      "Default": "HTTP",
+      "Description": "The protocol that the load balancer uses when performing health checks on the targets, such as HTTP or HTTPS.",
+      "Type": "String"
+    },
+    "TargetGroup3HealthyThresholdCount": {
+      "Default": "5",
+      "Description": "The number of consecutive successful health checks that are required before an unhealthy target is considered healthy.",
+      "MaxValue": "10",
+      "MinValue": "2",
+      "Type": "Number"
+    },
+    "TargetGroup3UnhealthyThresholdCount": {
+      "Default": "2",
+      "Description": "The number of consecutive failed health checks that are required before a target is considered unhealthy.",
+      "MaxValue": "10",
+      "MinValue": "2",
+      "Type": "Number"
+    },
+    "TargetGroup3Name": {
+      "Default": "WordpressTG",
+      "Description": "The name you want to give to the Wordpress Target Group.",
+      "Type": "String"
+    },
+    "TargetGroup3Port": {
+      "Default": "80",
+      "Description": "The port on which the targets receive traffic.",
+      "MaxValue": "65535",
+      "MinValue": "1",
+      "Type": "Number"
+    },
+    "TargetGroup3Protocol": {
+      "AllowedValues": [
+        "HTTP",
+        "HTTPS"
+      ],
+      "Default": "HTTP",
+      "Description": "The protocol to use for routing traffic to the targets.",
+      "Type": "String"
+    },
+    "TargetGroup3MatcherCode": {
+      "Default": "200,301,302",
+      "Description": "The HTTP codes. The default value is 200.",
+      "Type": "String"
+    },
+    "TargetGroup3AttributeDelayTimeout": {
+      "Default": "0",
+      "Description": "The amount time for Elastic Load Balancing to wait before changing the state of a deregistering target from draining to unused.",
+      "MaxValue": "3600",
+      "MinValue": "0",
+      "Type": "Number"
+    },
+    "TargetGroup3AttributeStickinessEnabled": {
+      "AllowedValues": [
+        "true",
+        "false"
+      ],
+      "ConstraintDescription": "Value must be either lowercase true or false.",
+      "Default": "false",
+      "Description": "Indicates whether sticky sessions are enabled.",
+      "Type": "String"
+    },
+    "TargetGroup3CookieDuration": {
+      "Default": "86400",
+      "Description": "The time period, in seconds, during which requests from a client should be routed to the same target.",
+      "MaxValue": "604800",
+      "MinValue": "1",
+      "Type": "Number"
+    },
+    "SSL": {
+      "Default": "",
+      "Description": "The Amazon Resource Name (ARN) of the certificate(s) to associate with listener 1 (Optional).",
+      "Type": "String"
+    },
+    "SSLPolicy": {
+      "Default": "",
+      "Description": "The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy. More information: http://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-security-policy-options.html.",
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "ALB": {
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties": {
+        "Subnets": {"Ref": "ALBSubnets"},
+        "Name": {"Ref": "LoadBalancerName"},
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": {"Ref": "Environment"}
+          },
+          {
+            "Key": "Name",
+            "Value": {"Ref": "LoadBalancerName"}
+          },
+          {
+            "Key": "ServiceProvider",
+            "Value": "Rackspace"
+          }
+        ],
+        "SecurityGroups": { "Ref": "ALBSecurityGroupIds" },
+        "Scheme": "internet-facing"
+      }
+    },
+    "MagentoAdminHttpListenerRule": {
+      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties" : {
+        "Actions": [{
+          "Type": "forward",
+          "TargetGroupArn": { "Ref": "TargetGroup2" }
+        }],
+        "Conditions": [{
+          "Field": "path-pattern",
+          "Values": [ "*f1984*" ]
+        }],
+        "ListenerArn": { "Ref": "ALBListenerHttp" },
+        "Priority": 1
+      }
+    },
+    "MagentoAdminHttpsListenerRule": {
+      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties" : {
+        "Actions": [{
+          "Type": "forward",
+          "TargetGroupArn": { "Ref": "TargetGroup2" }
+        }],
+        "Conditions": [{
+          "Field": "path-pattern",
+          "Values": [ "*f1984*" ]
+        }],
+        "ListenerArn": { "Ref": "ALBListenerHttps" },
+        "Priority": 1
+      }
+    },
+    "WordpressHttpListenerRule1": {
+      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties" : {
+        "Actions": [{
+          "Type": "forward",
+          "TargetGroupArn": { "Ref": "TargetGroup3" }
+        }],
+        "Conditions": [{
+          "Field": "path-pattern",
+          "Values": [ "/about/*" ]
+        }],
+        "ListenerArn": { "Ref": "ALBListenerHttp" },
+        "Priority": 2
+      }
+    },
+    "WordpressHttpListenerRule2": {
+      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties" : {
+        "Actions": [{
+          "Type": "forward",
+          "TargetGroupArn": { "Ref": "TargetGroup3" }
+        }],
+        "Conditions": [{
+          "Field": "path-pattern",
+          "Values": [ "/connect/*" ]
+        }],
+        "ListenerArn": { "Ref": "ALBListenerHttp" },
+        "Priority": 3
+      }
+    },
+    "WordpressHttpListenerRule3": {
+      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties" : {
+        "Actions": [{
+          "Type": "forward",
+          "TargetGroupArn": { "Ref": "TargetGroup3" }
+        }],
+        "Conditions": [{
+          "Field": "path-pattern",
+          "Values": [ "/learn/*" ]
+        }],
+        "ListenerArn": { "Ref": "ALBListenerHttp" },
+        "Priority": 4
+      }
+    },
+    "WordpressHttpListenerRule4": {
+      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties" : {
+        "Actions": [{
+          "Type": "forward",
+          "TargetGroupArn": { "Ref": "TargetGroup3" }
+        }],
+        "Conditions": [{
+          "Field": "path-pattern",
+          "Values": [ "/wp*" ]
+        }],
+        "ListenerArn": { "Ref": "ALBListenerHttp" },
+        "Priority": 5
+      }
+    },
+    "WordpressHttpsListenerRule1": {
+      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties" : {
+        "Actions": [{
+          "Type": "forward",
+          "TargetGroupArn": { "Ref": "TargetGroup3" }
+        }],
+        "Conditions": [{
+          "Field": "path-pattern",
+          "Values": [ "/about/*" ]
+        }],
+        "ListenerArn": { "Ref": "ALBListenerHttps" },
+        "Priority": 2
+      }
+    },
+    "WordpressHttpsListenerRule2": {
+      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties" : {
+        "Actions": [{
+          "Type": "forward",
+          "TargetGroupArn": { "Ref": "TargetGroup3" }
+        }],
+        "Conditions": [{
+          "Field": "path-pattern",
+          "Values": [ "/connect/*" ]
+        }],
+        "ListenerArn": { "Ref": "ALBListenerHttps" },
+        "Priority": 3
+      }
+    },
+    "WordpressHttpsListenerRule3": {
+      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties" : {
+        "Actions": [{
+          "Type": "forward",
+          "TargetGroupArn": { "Ref": "TargetGroup3" }
+        }],
+        "Conditions": [{
+          "Field": "path-pattern",
+          "Values": [ "/learn/*" ]
+        }],
+        "ListenerArn": { "Ref": "ALBListenerHttps" },
+        "Priority": 4
+      }
+    },
+    "WordpressHttpsListenerRule4": {
+      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties" : {
+        "Actions": [{
+          "Type": "forward",
+          "TargetGroupArn": { "Ref": "TargetGroup3" }
+        }],
+        "Conditions": [{
+          "Field": "path-pattern",
+          "Values": [ "/wp*" ]
+        }],
+        "ListenerArn": { "Ref": "ALBListenerHttps" },
+        "Priority": 5
+      }
+    },
+    "TargetGroup1": {
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties": {
+        "HealthCheckPath": {"Ref": "TargetGroup1HealthCheckPath"},
+        "HealthCheckIntervalSeconds": {"Ref": "TargetGroup1HealthCheckIntervalSeconds"},
+        "VpcId": {"Ref": "VPCId"},
+        "Protocol": {"Ref": "TargetGroup1Protocol"},
+        "Name": {"Ref": "TargetGroup1Name"},
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": {"Ref": "Environment"}
+          },
+          {
+            "Key": "Name",
+            "Value": {"Ref": "TargetGroup1Name"}
+          },
+          {
+            "Key": "ServiceProvider",
+            "Value": "Rackspace"
+          }
+        ],
+        "Matcher": {
+          "HttpCode": {"Ref": "TargetGroup1MatcherCode"}
+        },
+        "Port": {"Ref": "TargetGroup1Port"},
+        "HealthyThresholdCount": {"Ref": "TargetGroup1HealthyThresholdCount"},
+        "HealthCheckTimeoutSeconds": {"Ref": "TargetGroup1HealthCheckTimeoutSeconds"},
+        "TargetGroupAttributes": [
+          {
+            "Value": {"Ref": "TargetGroup1AttributeDelayTimeout"},
+            "Key": "deregistration_delay.timeout_seconds"
+          },
+          {
+            "Value": {"Ref": "TargetGroup1AttributeStickinessEnabled"},
+            "Key": "stickiness.enabled"
+          },
+          {
+            "Value": "lb_cookie",
+            "Key": "stickiness.type"
+          },
+          {
+            "Value": {"Ref": "TargetGroup1CookieDuration"},
+            "Key": "stickiness.lb_cookie.duration_seconds"
+          }
+        ],
+        "HealthCheckProtocol": {"Ref": "TargetGroup1HealthCheckProtocol"},
+        "HealthCheckPort": {"Ref": "TargetGroup1HealthCheckPort"},
+        "UnhealthyThresholdCount": {"Ref": "TargetGroup1UnhealthyThresholdCount"}
+      }
+    },
+    "TargetGroup2": {
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties": {
+        "HealthCheckPath": {"Ref": "TargetGroup2HealthCheckPath"},
+        "HealthCheckIntervalSeconds": {"Ref": "TargetGroup2HealthCheckIntervalSeconds"},
+        "VpcId": {"Ref": "VPCId"},
+        "Protocol": {"Ref": "TargetGroup2Protocol"},
+        "Name": {"Ref": "TargetGroup2Name"},
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": {"Ref": "Environment"}
+          },
+          {
+            "Key": "Name",
+            "Value": {"Ref": "TargetGroup2Name"}
+          },
+          {
+            "Key": "ServiceProvider",
+            "Value": "Rackspace"
+          }
+        ],
+        "Matcher": {
+          "HttpCode": {"Ref": "TargetGroup2MatcherCode"}
+        },
+        "Port": {"Ref": "TargetGroup2Port"},
+        "HealthyThresholdCount": {"Ref": "TargetGroup2HealthyThresholdCount"},
+        "HealthCheckTimeoutSeconds": {"Ref": "TargetGroup2HealthCheckTimeoutSeconds"},
+        "TargetGroupAttributes": [
+          {
+            "Value": {"Ref": "TargetGroup2AttributeDelayTimeout"},
+            "Key": "deregistration_delay.timeout_seconds"
+          },
+          {
+            "Value": {"Ref": "TargetGroup2AttributeStickinessEnabled"},
+            "Key": "stickiness.enabled"
+          },
+          {
+            "Value": "lb_cookie",
+            "Key": "stickiness.type"
+          },
+          {
+            "Value": {"Ref": "TargetGroup2CookieDuration"},
+            "Key": "stickiness.lb_cookie.duration_seconds"
+          }
+        ],
+        "HealthCheckProtocol": {"Ref": "TargetGroup2HealthCheckProtocol"},
+        "HealthCheckPort": {"Ref": "TargetGroup2HealthCheckPort"},
+        "UnhealthyThresholdCount": {"Ref": "TargetGroup2UnhealthyThresholdCount"}
+      }
+    },
+    "TargetGroup3": {
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties": {
+        "HealthCheckPath": {"Ref": "TargetGroup3HealthCheckPath"},
+        "HealthCheckIntervalSeconds": {"Ref": "TargetGroup3HealthCheckIntervalSeconds"},
+        "VpcId": {"Ref": "VPCId"},
+        "Protocol": {"Ref": "TargetGroup3Protocol"},
+        "Name": {"Ref": "TargetGroup3Name"},
+        "Tags": [
+          {
+            "Key": "Environment",
+            "Value": {"Ref": "Environment"}
+          },
+          {
+            "Key": "Name",
+            "Value": {"Ref": "TargetGroup3Name"}
+          },
+          {
+            "Key": "ServiceProvider",
+            "Value": "Rackspace"
+          }
+        ],
+        "Matcher": {
+          "HttpCode": {"Ref": "TargetGroup3MatcherCode"}
+        },
+        "Port": {"Ref": "TargetGroup3Port"},
+        "HealthyThresholdCount": {"Ref": "TargetGroup3HealthyThresholdCount"},
+        "HealthCheckTimeoutSeconds": {"Ref": "TargetGroup3HealthCheckTimeoutSeconds"},
+        "TargetGroupAttributes": [
+          {
+            "Value": {"Ref": "TargetGroup3AttributeDelayTimeout"},
+            "Key": "deregistration_delay.timeout_seconds"
+          },
+          {
+            "Value": {"Ref": "TargetGroup3AttributeStickinessEnabled"},
+            "Key": "stickiness.enabled"
+          },
+          {
+            "Value": "lb_cookie",
+            "Key": "stickiness.type"
+          },
+          {
+            "Value": {"Ref": "TargetGroup3CookieDuration"},
+            "Key": "stickiness.lb_cookie.duration_seconds"
+          }
+        ],
+        "HealthCheckProtocol": {"Ref": "TargetGroup3HealthCheckProtocol"},
+        "HealthCheckPort": {"Ref": "TargetGroup3HealthCheckPort"},
+        "UnhealthyThresholdCount": {"Ref": "TargetGroup3UnhealthyThresholdCount"}
+      }
+    },
+    "ALBListenerHttp": {
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+      "Properties": {
+        "DefaultActions": [
+          {
+            "TargetGroupArn": {"Ref" : "TargetGroup1"},
+            "Type": "forward"
+          }
+        ],
+        "LoadBalancerArn": {"Ref": "ALB"},
+        "Port": "80",
+        "Protocol": "HTTP"
+      }
+    },
+    "ALBListenerHttps": {
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+      "Properties": {
+        "Certificates": [
+          {
+            "Fn::If": [
+              "UseCertificates",
+              {
+                "CertificateArn": {
+                  "Ref": "SSL"
+                }
+              },
+              {"Ref": "AWS::NoValue"}
+            ]
+          }
+        ],
+        "DefaultActions": [
+          {
+            "TargetGroupArn": {"Ref" : "TargetGroup1"},
+            "Type": "forward"
+          }
+        ],
+        "LoadBalancerArn": {"Ref": "ALB"},
+        "Port": "443",
+        "Protocol": "HTTPS",
+        "SslPolicy": {"Fn::If": ["UseSSLPolicy", {"Ref": "SSLPolicy"}, {"Ref": "AWS::NoValue"}]}
+      }
+    }
+  },
+  "Outputs": {
+    "outputALB": {
+      "Description": "Application load balancer ID.",
+      "Value": { "Ref": "ALB" },
+      "Export" : { "Name" : {"Ref": "LoadBalancerName" }}
+    }
+  }
+}

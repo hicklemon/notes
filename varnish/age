@@ -1,0 +1,32 @@
+    if (beresp.status == 404 && req.restarts == 0
+        #&& req.url ~ "/specific/path/to/send/to/master"
+    ) {
+        return(restart);
+    }
+    
+    #-- If 404 or other errors, don't cache the "error" response
+    if (beresp.status >= 400 && req.restarts > 0) {
+      return(hit_for_pass);
+    }
+
+    # Keep static content in Browser Cache and Varnish Cache for a while. Tweak as needed.
+    if (req.url ~ "(?i)\.(bmp|bz2|css|gif|gz|ico|img|jpeg|jpg|js|lzma|mp3|ogg|png|swf|tbz|tga|tgz|txt|wmf|zip)(\?.*|)$") {
+      #-- Prevent Varnish from caching unsuccessful static requests
+      if (beresp.status >= 400 && req.restarts == 0) {
+        return(restart);
+      }
+
+      unset beresp.http.set-cookie;
+      set beresp.http.cache-control = "max-age=3600; public";
+      set beresp.ttl = 600s;
+      return(deliver);
+    }
+    #make Varnish compress content before storing it in cache and store text content for a while.
+    if (beresp.http.content-type ~ "text") {
+        set beresp.ttl = 600s;
+        set beresp.do_gzip = true;
+    }
+
+    # Allow items to be stale if needed.
+    set beresp.grace = 30m;
+

@@ -1,0 +1,8 @@
+ In most cases, the pipe action is not used for anything. However, if you want to stream objects, particularly large ones like videos, you probably want to use pipe. Using pipe means Varnish stops inspecting each request and just shuffles bytes to the backend. This can lead to multiple failure modes, from sending requests to the wrong backend to exposing your backend directly to clients. It also means only the first request gets the X-Forwarded-For header added.
+
+To work around this, you should make sure we close the backend connection after the first request. The easiest way to do this is the following receipe:
+
+sub vcl_pipe {
+    # This forces every pipe request to be the first one.
+    set bereq.http.connection = "close";
+}

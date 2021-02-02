@@ -1,0 +1,71 @@
+          "postfix": {
+            "commands": {
+              "01-disableSendmail": {
+                "test": "rpm -qa | grep -q sendmail",
+                "command": "service sendmail stop; chkconfig sendmail off",
+                "ignoreErrors": "true"
+              },
+              "02-installPostfix": {
+                "test": "! rpm -qa | grep -q postfix",
+                "command": "yum -y install postfix",
+                "ignoreErrors": "true"
+              },
+              "03-configurePostfixForSES": {
+                "test": "! grep -q amazonaws /etc/postfix/main.cf",
+                "command": {
+                  "Fn::Join": [
+                    "", [
+                      "echo -e \"\n# SES Configuration \n",
+                      "relayhost = [email-smtp.eu-west-1.amazonaws.com]:25 \n",
+                      "smtp_sasl_auth_enable = yes \n",
+                      "smtp_sasl_security_options = noanonymous \n",
+                      "smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd \n",
+                      "smtp_use_tls = yes \n",
+                      "smtp_tls_security_level = encrypt \n",
+                      "smtp_tls_note_starttls_offer = yes\" >> /etc/postfix/main.cf"
+                    ]
+                  ]
+                },
+                "ignoreErrors": "true"
+              },
+              "04-disableSMTPFallbackRelay": {
+                "test": "grep -q smtp_fallback_relay /etc/postfix/master.cf",
+                "command": "perl -i.bak -pe 's|^(.*)-o smtp_fallback_relay(.*)$|\\1#-o smtp_fallback_relay\\2|' /etc/postfix/master.cf",
+                "ignoreErrors": "true"
+              },
+              "05-injectSESCredentials": {
+                "test": "! test -f /etc/postfix/sasl_passwd",
+                "command": {
+                  "Fn::Join": [
+                    "", [
+                      "echo -e \"[email-smtp.eu-west-1.amazonaws.com]:25 AKIAXXXXXXXXXXXXXXXX:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\" >> /etc/postfix/sasl_passwd"
+                    ]
+                  ]
+                },
+                "ignoreErrors": "true"
+              },
+              "06-hashSASLPasswd": {
+                "test": "test -f /etc/postfix/sasl_passwd",
+                "command": "postmap hash:/etc/postfix/sasl_passwd",
+                "ignoreErrors": "true"
+              },
+              "07-removeSASLPasswdFile": {
+                "test": "test -f /etc/postfix/sasl_passwd",
+                "command": "rm -f /etc/postfix/sasl_passwd",
+                "ignoreErrors": "true"
+              },
+              "08-changePermissionsOnCredentialsFile": {
+                "test": "test -f /etc/postfix/sasl_passwd.db",
+                "command": "chown root:root /etc/postfix/sasl_passwd.db; chmod 0600 /etc/postfix/sasl_passwd.db",
+                "ignoreErrors": "true"
+              },
+              "09-verifySESServerCertificate": {
+                "command": "postconf -e 'smtp_tls_CAfile = /etc/ssl/certs/ca-bundle.crt'",
+                "ignoreErrors": "true"
+              },
+              "10-restartPostfix": {
+                "command": "service postfix stop; service postfix start",
+                "ignoreErrors": "true"
+              }
+            }
+          }

@@ -1,0 +1,32 @@
+Varnish:
+
+if (req.request == "POST" && req.url ~ "xmlrpc.php"){
+    error 404 "Not Found.";
+}
+
+# The GET requests do not seem to be an issue, as our default Varnish VCL attempts to perform a lookup on those anyways:
+
+if (req.request == "GET" && req.url ~ "(xmlrpc.php|wlmanifest.xml)") {
+    remove req.http.cookie;
+    return(lookup);
+}
+
+Apache:
+
+<Files xmlrpc.php>
+    Require all Denied
+</Files>
+
+Apache alternative method:
+
+<filesmatch "xmlrpc.php"> 
+    Redirect 403 /xmlrpc.php 
+    ErrorDocument 403 "Access to this file is forbidden"
+</filesmatch>
+
+nginx:
+
+location = /xmlrpc.php {
+    deny all;
+    access_log off; #to prevent from filling up the access log file
+}

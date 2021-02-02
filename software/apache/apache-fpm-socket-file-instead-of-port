@@ -1,0 +1,12 @@
+# Configure proxy connector
+<Proxy "unix:/var/run/php-fpm/default.sock|fcgi://php-fpm">
+        # we must declare a parameter in here (doesn't matter which) or it'll not register the proxy ahead of time
+        ProxySet disablereuse=off
+        ProxySet timeout=12000
+        ProxySet connectiontimeout=12000
+</Proxy>
+# Redirect to the proxy connector
+<FilesMatch \.php$>
+        SetHandler proxy:fcgi://php-fpm
+</FilesMatch>
+

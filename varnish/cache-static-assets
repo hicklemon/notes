@@ -1,0 +1,22 @@
+sub vcl_recv {
+    ## always cache these images & static assets
+    if (req.request == "GET" || req.url ~ "\.(css|js|gif|jpg|jpeg|bmp|png|ico|img|tga|wmf)$") {
+        remove req.http.cookie;
+        return(lookup);
+    }
+}
+
+sub vcl_fetch {
+    ## always cache these images & static assets
+    if (req.request == "GET" || req.url ~ "\.(css|js|gif|jpg|jpeg|bmp|png|ico|img|tga|wmf)$") {
+        remove beresp.http.cookie;
+        remove beresp.http.set-cookie;
+        set beresp.ttl = 1h;
+    }
+    if (beresp.ttl < 120s) {
+        set beresp.ttl = 120s;
+    }
+    if (beresp.http.Pragma ~ "nocache") {
+        return(hit_for_pass);
+    }
+}
