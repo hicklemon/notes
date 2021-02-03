@@ -1,1 +1,2 @@
-seq 0 $(($(cat /sys/block/xvdf/size) / (1 << 10))) | xargs -n1 -P32 -I {} sudo dd if=/dev/xvdf of=/dev/null skip={}k count=1 bs=512 > ddres0702.txt 2>&1
+seq 0 $(($(cat /sys/block/nvme0n1/size) / (1 << 10))) | xargs -n1 -P32 -I {} sudo dd if=/dev/nvme0n1 of=/dev/null skip={}k count=1 bs=512 > prewarm.txt 2>&1
+
