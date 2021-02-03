@@ -1,8 +1,11 @@
 Edit app/etc/di.xml
+
 Find this line: "    <preference for="Magento\Framework\DB\LoggerInterface" type="Magento\Framework\DB\Logger\Quiet"/>"
+
 Change to:      <preference for="Magento\Framework\DB\LoggerInterface" type="Magento\Framework\DB\Logger\File"/>
 
 Next, add this to anywhere in the app/etc/di.xml:
+
 <type name="Magento\Framework\DB\Logger\File">
     <arguments>
         <!--this is in relation to the <magento root>/var folder-->
