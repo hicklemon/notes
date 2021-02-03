@@ -1,31 +1,33 @@
-# lsof -n | grep deleted | grep database
+# Let's say you've lost some data, but there's a process in memory keeping the file descriptor open, and you want to use it to get that file back.
+
+# List open, deleted files:
+$ lsof -n | grep deleted | grep database
 tail      19833     root    3r      REG              202,1    22634     917513 /database/mgslice.err (deleted)
-#
-# tail -1 /database/mgslice.err
+
+# Try to access the data
+$ tail -1 /database/mgslice.err
 tail: cannot open `/database/mgslice.err' for reading: No such file or directory
-#
-# tail -1 /proc/19833/fd/3
+
+# Since the file's dead, try to read from the descriptor:
+$ tail -1 /proc/19833/fd/3
 tail: inotify cannot be used, reverting to polling
 141023 23:15:43 mysqld_safe mysqld from pid file /var/run/mysqld/mysqld.pid ended
-#
-#
-# cp -a /proc/19833/fd/3 mgslice.err
-#
-# file mgslice.err
+
+# Since the descriptor is open, try and copy it to a normal file:
+$ cp -a /proc/19833/fd/3 mgslice.err
+
+# Archive copy doesn't work:
+$ file mgslice.err
 mgslice.err: broken symbolic link to `/database/mgslice.err (deleted)'
-#
-# cp /proc/19833/fd/3 mgslice.err
-cp: not writing through dangling symlink `mgslice.err'
-#
-# rm -f mgslice.err
-#
-#
-# cp /proc/19833/fd/3 mgslice.err # not -a
-#
-# file mgslice.err
+
+# So we take a plain copy:
+$ cp /proc/19833/fd/3 mgslice.err
+
+# Check for headers or data structure:
+$ file mgslice.err
 mgslice.err: ASCII English text, with very long lines
-#
-# tail -1 mgslice.err
+
+# And view our recovered data:
+$ tail -1 mgslice.err
 141023 23:15:43 mysqld_safe mysqld from pid file /var/run/mysqld/mysqld.pid ended
-#
 
