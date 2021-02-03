@@ -39,7 +39,7 @@ defaults
 	errorfile 504 /etc/haproxy/errors/504.http
 
 resolvers dns
-        nameserver vpc 10.252.0.2:53
+        nameserver vpc 169.254.169.253:53
         hold valid 15s
 
 frontend http-in
