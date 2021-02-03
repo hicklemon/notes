@@ -1,10 +1,48 @@
 \n
-            time_namelookup:  %{time_namelookup}\n
-               time_connect:  %{time_connect}\n
-            time_appconnect:  %{time_appconnect}\n
-           time_pretransfer:  %{time_pretransfer}\n
-              time_redirect:  %{time_redirect}\n
-         time_starttransfer:  %{time_starttransfer}\n
-                            ----------\n
-                 time_total:  %{time_total}\n
+Request Details:\n
+\n
+    Method: %{method}\n
+    Requested Content-Type: %{content_type}\n
+    Scheme: %{scheme}\n
+\n
+Proxy Details:\n
+\n
+    HTTP CONNECT code: %{http_connect}\n
+    Proxy Peer Certificate Verification Return Code: %{proxy_ssl_verify_result}\n
+\n
+Response Details:\n
+\n
+    Effective URL: %{url_effective}\n
+    SSL Verify Result: %{ssl_verify_result}\n
+    HTTP Code: %{http_code}\n
+    Response Code: %{response_code}\n
+    Redirect URL (if not final destination): %{redirect_url}\n
+\n
+Stats:\n
+\n
+    Connections Made: %{num_connects}\n
+    Final Response Headers: %{num_headers}\n
+    Redirects Followed %{num_redirects}\n
+    Request Size: %{size_request}\n
+    Headers Size: %{size_header}\n
+    Upload Size: %{size_upload}\n
+    Upload Speed: %{speed_upload}\n
+    Download Speed: %{speed_download}\n
+\n
+Performance:\n
+\n
+    DNS resolution: %{time_namelookup}μs\n
+    TCP connect: %{time_connect}μs\n
+    Handshake: %{time_appconnect}μs\n
+    Pretransfer: %{time_pretransfer}μs\n
+    Redirection: %{time_redirect}μs\n
+    First Byte: %{time_starttransfer}μs\n
+    Overall: %{time_total}μs\n
+\n
+Debug:\n
+\n
+    Local IP/Port: %{local_ip}:%{local_port}\n
+    Remote IP/Port: %{remote_ip}:%{remote_port}\n
+    Output Filename: %{filename_effective}\n
+    HTTP Version: %{http_version}\n
 \n
