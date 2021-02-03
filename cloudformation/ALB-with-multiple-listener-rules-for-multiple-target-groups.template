@@ -29,30 +29,30 @@
   },
   "Parameters": {
     "LoadBalancerName": {
-        "Type": "String",
-        "Default": "MagentoAdminALB",
-        "Description": "A name for the load balancer, which must be unique within your AWS account."
+      "Type": "String",
+      "Default": "MagentoAdminALB",
+      "Description": "A name for the load balancer, which must be unique within your AWS account."
     },
     "Environment": {
-        "Default": "Production",
-        "Type": "String",
-        "Description": "Application environment for which this ALB is being created. e.g. Development/Production.",
-        "AllowedValues": [
-            "Development",
-            "Integration",
-            "PreProduction",
-            "Production",
-            "Staging",
-            "Test"
-        ]
+      "Default": "Production",
+      "Type": "String",
+      "Description": "Application environment for which this ALB is being created. e.g. Development/Production.",
+      "AllowedValues": [
+        "Development",
+        "Integration",
+        "PreProduction",
+        "Production",
+        "Staging",
+        "Test"
+      ]
     },
-    "VPCId":{
-      "Type" : "AWS::EC2::VPC::Id",
-      "Description" : "Select Virtual Private Cloud ID."        
+    "VPCId": {
+      "Type": "AWS::EC2::VPC::Id",
+      "Description": "Select Virtual Private Cloud ID."
     },
     "ALBSubnets": {
-        "Description": "Select the public subnets the load balancer will listen on.",
-        "Type": "List<AWS::EC2::Subnet::Id>"
+      "Description": "Select the public subnets the load balancer will listen on.",
+      "Type": "List<AWS::EC2::Subnet::Id>"
     },
     "ALBSecurityGroupIds": {
       "Description": "Select the security group to be associated with the load balancer",
@@ -374,192 +374,316 @@
     "ALB": {
       "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
       "Properties": {
-        "Subnets": {"Ref": "ALBSubnets"},
-        "Name": {"Ref": "LoadBalancerName"},
+        "Subnets": {
+          "Ref": "ALBSubnets"
+        },
+        "Name": {
+          "Ref": "LoadBalancerName"
+        },
         "Tags": [
           {
             "Key": "Environment",
-            "Value": {"Ref": "Environment"}
+            "Value": {
+              "Ref": "Environment"
+            }
           },
           {
             "Key": "Name",
-            "Value": {"Ref": "LoadBalancerName"}
+            "Value": {
+              "Ref": "LoadBalancerName"
+            }
           },
           {
             "Key": "ServiceProvider",
             "Value": "Rackspace"
           }
         ],
-        "SecurityGroups": { "Ref": "ALBSecurityGroupIds" },
+        "SecurityGroups": {
+          "Ref": "ALBSecurityGroupIds"
+        },
         "Scheme": "internet-facing"
       }
     },
     "MagentoAdminHttpListenerRule": {
-      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
-      "Properties" : {
-        "Actions": [{
-          "Type": "forward",
-          "TargetGroupArn": { "Ref": "TargetGroup2" }
-        }],
-        "Conditions": [{
-          "Field": "path-pattern",
-          "Values": [ "*f1984*" ]
-        }],
-        "ListenerArn": { "Ref": "ALBListenerHttp" },
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties": {
+        "Actions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "TargetGroup2"
+            }
+          }
+        ],
+        "Conditions": [
+          {
+            "Field": "path-pattern",
+            "Values": [
+              "*f1984*"
+            ]
+          }
+        ],
+        "ListenerArn": {
+          "Ref": "ALBListenerHttp"
+        },
         "Priority": 1
       }
     },
     "MagentoAdminHttpsListenerRule": {
-      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
-      "Properties" : {
-        "Actions": [{
-          "Type": "forward",
-          "TargetGroupArn": { "Ref": "TargetGroup2" }
-        }],
-        "Conditions": [{
-          "Field": "path-pattern",
-          "Values": [ "*f1984*" ]
-        }],
-        "ListenerArn": { "Ref": "ALBListenerHttps" },
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties": {
+        "Actions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "TargetGroup2"
+            }
+          }
+        ],
+        "Conditions": [
+          {
+            "Field": "path-pattern",
+            "Values": [
+              "*f1984*"
+            ]
+          }
+        ],
+        "ListenerArn": {
+          "Ref": "ALBListenerHttps"
+        },
         "Priority": 1
       }
     },
     "WordpressHttpListenerRule1": {
-      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
-      "Properties" : {
-        "Actions": [{
-          "Type": "forward",
-          "TargetGroupArn": { "Ref": "TargetGroup3" }
-        }],
-        "Conditions": [{
-          "Field": "path-pattern",
-          "Values": [ "/about/*" ]
-        }],
-        "ListenerArn": { "Ref": "ALBListenerHttp" },
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties": {
+        "Actions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "TargetGroup3"
+            }
+          }
+        ],
+        "Conditions": [
+          {
+            "Field": "path-pattern",
+            "Values": [
+              "/about/*"
+            ]
+          }
+        ],
+        "ListenerArn": {
+          "Ref": "ALBListenerHttp"
+        },
         "Priority": 2
       }
     },
     "WordpressHttpListenerRule2": {
-      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
-      "Properties" : {
-        "Actions": [{
-          "Type": "forward",
-          "TargetGroupArn": { "Ref": "TargetGroup3" }
-        }],
-        "Conditions": [{
-          "Field": "path-pattern",
-          "Values": [ "/connect/*" ]
-        }],
-        "ListenerArn": { "Ref": "ALBListenerHttp" },
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties": {
+        "Actions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "TargetGroup3"
+            }
+          }
+        ],
+        "Conditions": [
+          {
+            "Field": "path-pattern",
+            "Values": [
+              "/connect/*"
+            ]
+          }
+        ],
+        "ListenerArn": {
+          "Ref": "ALBListenerHttp"
+        },
         "Priority": 3
       }
     },
     "WordpressHttpListenerRule3": {
-      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
-      "Properties" : {
-        "Actions": [{
-          "Type": "forward",
-          "TargetGroupArn": { "Ref": "TargetGroup3" }
-        }],
-        "Conditions": [{
-          "Field": "path-pattern",
-          "Values": [ "/learn/*" ]
-        }],
-        "ListenerArn": { "Ref": "ALBListenerHttp" },
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties": {
+        "Actions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "TargetGroup3"
+            }
+          }
+        ],
+        "Conditions": [
+          {
+            "Field": "path-pattern",
+            "Values": [
+              "/learn/*"
+            ]
+          }
+        ],
+        "ListenerArn": {
+          "Ref": "ALBListenerHttp"
+        },
         "Priority": 4
       }
     },
     "WordpressHttpListenerRule4": {
-      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
-      "Properties" : {
-        "Actions": [{
-          "Type": "forward",
-          "TargetGroupArn": { "Ref": "TargetGroup3" }
-        }],
-        "Conditions": [{
-          "Field": "path-pattern",
-          "Values": [ "/wp*" ]
-        }],
-        "ListenerArn": { "Ref": "ALBListenerHttp" },
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties": {
+        "Actions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "TargetGroup3"
+            }
+          }
+        ],
+        "Conditions": [
+          {
+            "Field": "path-pattern",
+            "Values": [
+              "/wp*"
+            ]
+          }
+        ],
+        "ListenerArn": {
+          "Ref": "ALBListenerHttp"
+        },
         "Priority": 5
       }
     },
     "WordpressHttpsListenerRule1": {
-      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
-      "Properties" : {
-        "Actions": [{
-          "Type": "forward",
-          "TargetGroupArn": { "Ref": "TargetGroup3" }
-        }],
-        "Conditions": [{
-          "Field": "path-pattern",
-          "Values": [ "/about/*" ]
-        }],
-        "ListenerArn": { "Ref": "ALBListenerHttps" },
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties": {
+        "Actions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "TargetGroup3"
+            }
+          }
+        ],
+        "Conditions": [
+          {
+            "Field": "path-pattern",
+            "Values": [
+              "/about/*"
+            ]
+          }
+        ],
+        "ListenerArn": {
+          "Ref": "ALBListenerHttps"
+        },
         "Priority": 2
       }
     },
     "WordpressHttpsListenerRule2": {
-      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
-      "Properties" : {
-        "Actions": [{
-          "Type": "forward",
-          "TargetGroupArn": { "Ref": "TargetGroup3" }
-        }],
-        "Conditions": [{
-          "Field": "path-pattern",
-          "Values": [ "/connect/*" ]
-        }],
-        "ListenerArn": { "Ref": "ALBListenerHttps" },
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties": {
+        "Actions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "TargetGroup3"
+            }
+          }
+        ],
+        "Conditions": [
+          {
+            "Field": "path-pattern",
+            "Values": [
+              "/connect/*"
+            ]
+          }
+        ],
+        "ListenerArn": {
+          "Ref": "ALBListenerHttps"
+        },
         "Priority": 3
       }
     },
     "WordpressHttpsListenerRule3": {
-      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
-      "Properties" : {
-        "Actions": [{
-          "Type": "forward",
-          "TargetGroupArn": { "Ref": "TargetGroup3" }
-        }],
-        "Conditions": [{
-          "Field": "path-pattern",
-          "Values": [ "/learn/*" ]
-        }],
-        "ListenerArn": { "Ref": "ALBListenerHttps" },
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties": {
+        "Actions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "TargetGroup3"
+            }
+          }
+        ],
+        "Conditions": [
+          {
+            "Field": "path-pattern",
+            "Values": [
+              "/learn/*"
+            ]
+          }
+        ],
+        "ListenerArn": {
+          "Ref": "ALBListenerHttps"
+        },
         "Priority": 4
       }
     },
     "WordpressHttpsListenerRule4": {
-      "Type" : "AWS::ElasticLoadBalancingV2::ListenerRule",
-      "Properties" : {
-        "Actions": [{
-          "Type": "forward",
-          "TargetGroupArn": { "Ref": "TargetGroup3" }
-        }],
-        "Conditions": [{
-          "Field": "path-pattern",
-          "Values": [ "/wp*" ]
-        }],
-        "ListenerArn": { "Ref": "ALBListenerHttps" },
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "Properties": {
+        "Actions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": {
+              "Ref": "TargetGroup3"
+            }
+          }
+        ],
+        "Conditions": [
+          {
+            "Field": "path-pattern",
+            "Values": [
+              "/wp*"
+            ]
+          }
+        ],
+        "ListenerArn": {
+          "Ref": "ALBListenerHttps"
+        },
         "Priority": 5
       }
     },
     "TargetGroup1": {
       "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
       "Properties": {
-        "HealthCheckPath": {"Ref": "TargetGroup1HealthCheckPath"},
-        "HealthCheckIntervalSeconds": {"Ref": "TargetGroup1HealthCheckIntervalSeconds"},
-        "VpcId": {"Ref": "VPCId"},
-        "Protocol": {"Ref": "TargetGroup1Protocol"},
-        "Name": {"Ref": "TargetGroup1Name"},
+        "HealthCheckPath": {
+          "Ref": "TargetGroup1HealthCheckPath"
+        },
+        "HealthCheckIntervalSeconds": {
+          "Ref": "TargetGroup1HealthCheckIntervalSeconds"
+        },
+        "VpcId": {
+          "Ref": "VPCId"
+        },
+        "Protocol": {
+          "Ref": "TargetGroup1Protocol"
+        },
+        "Name": {
+          "Ref": "TargetGroup1Name"
+        },
         "Tags": [
           {
             "Key": "Environment",
-            "Value": {"Ref": "Environment"}
+            "Value": {
+              "Ref": "Environment"
+            }
           },
           {
             "Key": "Name",
-            "Value": {"Ref": "TargetGroup1Name"}
+            "Value": {
+              "Ref": "TargetGroup1Name"
+            }
           },
           {
             "Key": "ServiceProvider",
@@ -567,18 +691,30 @@
           }
         ],
         "Matcher": {
-          "HttpCode": {"Ref": "TargetGroup1MatcherCode"}
+          "HttpCode": {
+            "Ref": "TargetGroup1MatcherCode"
+          }
         },
-        "Port": {"Ref": "TargetGroup1Port"},
-        "HealthyThresholdCount": {"Ref": "TargetGroup1HealthyThresholdCount"},
-        "HealthCheckTimeoutSeconds": {"Ref": "TargetGroup1HealthCheckTimeoutSeconds"},
+        "Port": {
+          "Ref": "TargetGroup1Port"
+        },
+        "HealthyThresholdCount": {
+          "Ref": "TargetGroup1HealthyThresholdCount"
+        },
+        "HealthCheckTimeoutSeconds": {
+          "Ref": "TargetGroup1HealthCheckTimeoutSeconds"
+        },
         "TargetGroupAttributes": [
           {
-            "Value": {"Ref": "TargetGroup1AttributeDelayTimeout"},
+            "Value": {
+              "Ref": "TargetGroup1AttributeDelayTimeout"
+            },
             "Key": "deregistration_delay.timeout_seconds"
           },
           {
-            "Value": {"Ref": "TargetGroup1AttributeStickinessEnabled"},
+            "Value": {
+              "Ref": "TargetGroup1AttributeStickinessEnabled"
+            },
             "Key": "stickiness.enabled"
           },
           {
@@ -586,31 +722,53 @@
             "Key": "stickiness.type"
           },
           {
-            "Value": {"Ref": "TargetGroup1CookieDuration"},
+            "Value": {
+              "Ref": "TargetGroup1CookieDuration"
+            },
             "Key": "stickiness.lb_cookie.duration_seconds"
           }
         ],
-        "HealthCheckProtocol": {"Ref": "TargetGroup1HealthCheckProtocol"},
-        "HealthCheckPort": {"Ref": "TargetGroup1HealthCheckPort"},
-        "UnhealthyThresholdCount": {"Ref": "TargetGroup1UnhealthyThresholdCount"}
+        "HealthCheckProtocol": {
+          "Ref": "TargetGroup1HealthCheckProtocol"
+        },
+        "HealthCheckPort": {
+          "Ref": "TargetGroup1HealthCheckPort"
+        },
+        "UnhealthyThresholdCount": {
+          "Ref": "TargetGroup1UnhealthyThresholdCount"
+        }
       }
     },
     "TargetGroup2": {
       "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
       "Properties": {
-        "HealthCheckPath": {"Ref": "TargetGroup2HealthCheckPath"},
-        "HealthCheckIntervalSeconds": {"Ref": "TargetGroup2HealthCheckIntervalSeconds"},
-        "VpcId": {"Ref": "VPCId"},
-        "Protocol": {"Ref": "TargetGroup2Protocol"},
-        "Name": {"Ref": "TargetGroup2Name"},
+        "HealthCheckPath": {
+          "Ref": "TargetGroup2HealthCheckPath"
+        },
+        "HealthCheckIntervalSeconds": {
+          "Ref": "TargetGroup2HealthCheckIntervalSeconds"
+        },
+        "VpcId": {
+          "Ref": "VPCId"
+        },
+        "Protocol": {
+          "Ref": "TargetGroup2Protocol"
+        },
+        "Name": {
+          "Ref": "TargetGroup2Name"
+        },
         "Tags": [
           {
             "Key": "Environment",
-            "Value": {"Ref": "Environment"}
+            "Value": {
+              "Ref": "Environment"
+            }
           },
           {
             "Key": "Name",
-            "Value": {"Ref": "TargetGroup2Name"}
+            "Value": {
+              "Ref": "TargetGroup2Name"
+            }
           },
           {
             "Key": "ServiceProvider",
@@ -618,18 +776,30 @@
           }
         ],
         "Matcher": {
-          "HttpCode": {"Ref": "TargetGroup2MatcherCode"}
+          "HttpCode": {
+            "Ref": "TargetGroup2MatcherCode"
+          }
         },
-        "Port": {"Ref": "TargetGroup2Port"},
-        "HealthyThresholdCount": {"Ref": "TargetGroup2HealthyThresholdCount"},
-        "HealthCheckTimeoutSeconds": {"Ref": "TargetGroup2HealthCheckTimeoutSeconds"},
+        "Port": {
+          "Ref": "TargetGroup2Port"
+        },
+        "HealthyThresholdCount": {
+          "Ref": "TargetGroup2HealthyThresholdCount"
+        },
+        "HealthCheckTimeoutSeconds": {
+          "Ref": "TargetGroup2HealthCheckTimeoutSeconds"
+        },
         "TargetGroupAttributes": [
           {
-            "Value": {"Ref": "TargetGroup2AttributeDelayTimeout"},
+            "Value": {
+              "Ref": "TargetGroup2AttributeDelayTimeout"
+            },
             "Key": "deregistration_delay.timeout_seconds"
           },
           {
-            "Value": {"Ref": "TargetGroup2AttributeStickinessEnabled"},
+            "Value": {
+              "Ref": "TargetGroup2AttributeStickinessEnabled"
+            },
             "Key": "stickiness.enabled"
           },
           {
@@ -637,31 +807,53 @@
             "Key": "stickiness.type"
           },
           {
-            "Value": {"Ref": "TargetGroup2CookieDuration"},
+            "Value": {
+              "Ref": "TargetGroup2CookieDuration"
+            },
             "Key": "stickiness.lb_cookie.duration_seconds"
           }
         ],
-        "HealthCheckProtocol": {"Ref": "TargetGroup2HealthCheckProtocol"},
-        "HealthCheckPort": {"Ref": "TargetGroup2HealthCheckPort"},
-        "UnhealthyThresholdCount": {"Ref": "TargetGroup2UnhealthyThresholdCount"}
+        "HealthCheckProtocol": {
+          "Ref": "TargetGroup2HealthCheckProtocol"
+        },
+        "HealthCheckPort": {
+          "Ref": "TargetGroup2HealthCheckPort"
+        },
+        "UnhealthyThresholdCount": {
+          "Ref": "TargetGroup2UnhealthyThresholdCount"
+        }
       }
     },
     "TargetGroup3": {
       "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
       "Properties": {
-        "HealthCheckPath": {"Ref": "TargetGroup3HealthCheckPath"},
-        "HealthCheckIntervalSeconds": {"Ref": "TargetGroup3HealthCheckIntervalSeconds"},
-        "VpcId": {"Ref": "VPCId"},
-        "Protocol": {"Ref": "TargetGroup3Protocol"},
-        "Name": {"Ref": "TargetGroup3Name"},
+        "HealthCheckPath": {
+          "Ref": "TargetGroup3HealthCheckPath"
+        },
+        "HealthCheckIntervalSeconds": {
+          "Ref": "TargetGroup3HealthCheckIntervalSeconds"
+        },
+        "VpcId": {
+          "Ref": "VPCId"
+        },
+        "Protocol": {
+          "Ref": "TargetGroup3Protocol"
+        },
+        "Name": {
+          "Ref": "TargetGroup3Name"
+        },
         "Tags": [
           {
             "Key": "Environment",
-            "Value": {"Ref": "Environment"}
+            "Value": {
+              "Ref": "Environment"
+            }
           },
           {
             "Key": "Name",
-            "Value": {"Ref": "TargetGroup3Name"}
+            "Value": {
+              "Ref": "TargetGroup3Name"
+            }
           },
           {
             "Key": "ServiceProvider",
@@ -669,18 +861,30 @@
           }
         ],
         "Matcher": {
-          "HttpCode": {"Ref": "TargetGroup3MatcherCode"}
+          "HttpCode": {
+            "Ref": "TargetGroup3MatcherCode"
+          }
         },
-        "Port": {"Ref": "TargetGroup3Port"},
-        "HealthyThresholdCount": {"Ref": "TargetGroup3HealthyThresholdCount"},
-        "HealthCheckTimeoutSeconds": {"Ref": "TargetGroup3HealthCheckTimeoutSeconds"},
+        "Port": {
+          "Ref": "TargetGroup3Port"
+        },
+        "HealthyThresholdCount": {
+          "Ref": "TargetGroup3HealthyThresholdCount"
+        },
+        "HealthCheckTimeoutSeconds": {
+          "Ref": "TargetGroup3HealthCheckTimeoutSeconds"
+        },
         "TargetGroupAttributes": [
           {
-            "Value": {"Ref": "TargetGroup3AttributeDelayTimeout"},
+            "Value": {
+              "Ref": "TargetGroup3AttributeDelayTimeout"
+            },
             "Key": "deregistration_delay.timeout_seconds"
           },
           {
-            "Value": {"Ref": "TargetGroup3AttributeStickinessEnabled"},
+            "Value": {
+              "Ref": "TargetGroup3AttributeStickinessEnabled"
+            },
             "Key": "stickiness.enabled"
           },
           {
@@ -688,13 +892,21 @@
             "Key": "stickiness.type"
           },
           {
-            "Value": {"Ref": "TargetGroup3CookieDuration"},
+            "Value": {
+              "Ref": "TargetGroup3CookieDuration"
+            },
             "Key": "stickiness.lb_cookie.duration_seconds"
           }
         ],
-        "HealthCheckProtocol": {"Ref": "TargetGroup3HealthCheckProtocol"},
-        "HealthCheckPort": {"Ref": "TargetGroup3HealthCheckPort"},
-        "UnhealthyThresholdCount": {"Ref": "TargetGroup3UnhealthyThresholdCount"}
+        "HealthCheckProtocol": {
+          "Ref": "TargetGroup3HealthCheckProtocol"
+        },
+        "HealthCheckPort": {
+          "Ref": "TargetGroup3HealthCheckPort"
+        },
+        "UnhealthyThresholdCount": {
+          "Ref": "TargetGroup3UnhealthyThresholdCount"
+        }
       }
     },
     "ALBListenerHttp": {
@@ -702,11 +914,15 @@
       "Properties": {
         "DefaultActions": [
           {
-            "TargetGroupArn": {"Ref" : "TargetGroup1"},
+            "TargetGroupArn": {
+              "Ref": "TargetGroup1"
+            },
             "Type": "forward"
           }
         ],
-        "LoadBalancerArn": {"Ref": "ALB"},
+        "LoadBalancerArn": {
+          "Ref": "ALB"
+        },
         "Port": "80",
         "Protocol": "HTTP"
       }
@@ -723,28 +939,50 @@
                   "Ref": "SSL"
                 }
               },
-              {"Ref": "AWS::NoValue"}
+              {
+                "Ref": "AWS::NoValue"
+              }
             ]
           }
         ],
         "DefaultActions": [
           {
-            "TargetGroupArn": {"Ref" : "TargetGroup1"},
+            "TargetGroupArn": {
+              "Ref": "TargetGroup1"
+            },
             "Type": "forward"
           }
         ],
-        "LoadBalancerArn": {"Ref": "ALB"},
+        "LoadBalancerArn": {
+          "Ref": "ALB"
+        },
         "Port": "443",
         "Protocol": "HTTPS",
-        "SslPolicy": {"Fn::If": ["UseSSLPolicy", {"Ref": "SSLPolicy"}, {"Ref": "AWS::NoValue"}]}
+        "SslPolicy": {
+          "Fn::If": [
+            "UseSSLPolicy",
+            {
+              "Ref": "SSLPolicy"
+            },
+            {
+              "Ref": "AWS::NoValue"
+            }
+          ]
+        }
       }
     }
   },
   "Outputs": {
     "outputALB": {
       "Description": "Application load balancer ID.",
-      "Value": { "Ref": "ALB" },
-      "Export" : { "Name" : {"Ref": "LoadBalancerName" }}
+      "Value": {
+        "Ref": "ALB"
+      },
+      "Export": {
+        "Name": {
+          "Ref": "LoadBalancerName"
+        }
+      }
     }
   }
 }
