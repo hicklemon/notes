@@ -1,0 +1,7 @@
+# Aggregate audio device
+
+You can use `paprefs` to create an aggregate audio device to duplicate audio to multiple outputs. (Does not support multi-input)
+
+# Volume control
+
+You can control the volume using `pavucontrol`, which also provides a systray icon (and is i3/polybar friendly)
