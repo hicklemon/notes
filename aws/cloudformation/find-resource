@@ -1,0 +1,1 @@
+aws cloudformation describe-stack-resources --physical-resource-id 'some-s3-bucket-name'
