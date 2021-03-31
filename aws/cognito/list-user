@@ -1,0 +1,2 @@
+aws cognito-idp list-users --user-pool-id us-east-1_AAAAAAAA1 --filter "email = 'someone@email.tld'"
+

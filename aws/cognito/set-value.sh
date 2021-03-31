@@ -1,1 +1,0 @@
-aws cognito-idp admin-update-user-attributes --user-pool-id us-east-1_XXXXXXXXX --username Username_identifier_here_0000000000000000 --user-attributes 'Name=some_key,Value=some_value'

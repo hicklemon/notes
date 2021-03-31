@@ -1,0 +1,2 @@
+aws cognito-idp admin-delete-user --user-pool-id us-east-1_AAAAAAAA1 --username 00000000-0000-0000-0000-000000000000
+
