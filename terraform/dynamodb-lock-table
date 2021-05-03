@@ -1,0 +1,3 @@
+Create a new table with a Primary partition key of LockID (String).
+
+Provisioned read/write capacity mode is just fine.
